@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thuật toán Giải Mê Cung bằng Quay lui</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .cell-transition { transition: all 0.25s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 py-4 px-6 shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-route text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                        Giải Mê Cung Bằng Quay Lui (Backtracking)
+                    </h1>
+                    <p class="text-xs text-slate-400">Mô phỏng trực quan ma trận 6x6 & thuật toán tìm đường</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="switchTab('simulator')" id="btn-tab-simulator" class="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow-sm">
+                    <i class="fa-solid fa-play mr-1.5"></i> Mô phỏng
+                </button>
+                <button onclick="switchTab('theory')" id="btn-tab-theory" class="px-4 py-2 text-sm font-medium rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition">
+                    <i class="fa-solid fa-book-open mr-1.5"></i> Lý thuyết & Mã nguồn
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl w-full mx-auto px-4 py-8 flex-grow">
+        
+        <!-- Tab 1: Simulator View -->
+        <div id="tab-simulator" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Grid & Controls -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                <!-- Legend Card -->
+                <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-4 shadow-xl">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Chú thích màu sắc</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="flex items-center gap-2">
+                            <div class="w-5 h-5 rounded-md bg-slate-700 border border-slate-600 flex items-center justify-center text-[10px]">0</div>
+                            <span>Đường đi (Trống)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-5 h-5 rounded-md bg-slate-900 border border-slate-700 flex items-center justify-center text-[10px]">1</div>
+                            <span>Tường (Chướng ngại)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-5 h-5 rounded-md bg-emerald-500 shadow-sm shadow-emerald-500/50 flex items-center justify-center text-white"><i class="fa-solid fa-flag text-[10px]"></i></div>
+                            <span>Bắt đầu (0,0)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-5 h-5 rounded-md bg-rose-500 shadow-sm shadow-rose-500/50 flex items-center justify-center text-white"><i class="fa-solid fa-bullseye text-[10px]"></i></div>
+                            <span>Kết thúc (5,5)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-5 h-5 rounded-md bg-amber-500 animate-pulse flex items-center justify-center text-white"><i class="fa-solid fa-spinner text-[10px]"></i></div>
+                            <span>Đang xét / Thử</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-5 h-5 rounded-md bg-blue-500 shadow-sm shadow-blue-500/50 flex items-center justify-center text-white"><i class="fa-solid fa-check text-[10px]"></i></div>
+                            <span>Đường đi đúng</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-5 h-5 rounded-md bg-orange-600/80 flex items-center justify-center text-white"><i class="fa-solid fa-rotate-left text-[10px]"></i></div>
+                            <span>Quay lui (Dead end)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maze Board Display -->
+                <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 shadow-2xl flex flex-col items-center">
+                    <div class="flex justify-between items-center w-full mb-4">
+                        <div class="text-sm font-medium text-slate-300">
+                            <i class="fa-solid fa-table-cells mr-1.5 text-indigo-400"></i> Ma trận Mê cung (6x6)
+                        </div>
+                        <div class="text-xs text-slate-400 bg-slate-900/60 px-3 py-1 rounded-full border border-slate-700">
+                            Mẹo: Click vào ô trống/tường để thay đổi
+                        </div>
+                    </div>
+
+                    <!-- 6x6 Grid Container -->
+                    <div id="maze-grid" class="grid grid-cols-6 gap-2.5 w-full max-w-md aspect-square bg-slate-950/60 p-3 rounded-xl border border-slate-700/80">
+                        <!-- Javascript will generate cells here -->
+                    </div>
+
+                    <!-- Speed & Controls Toolbar -->
+                    <div class="w-full mt-6 pt-4 border-t border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <span class="text-xs text-slate-400 whitespace-nowrap"><i class="fa-solid fa-gauge-high mr-1"></i> Tốc độ:</span>
+                            <input type="range" id="speed-slider" min="50" max="1000" step="50" value="400" class="w-full sm:w-32 accent-indigo-500 cursor-pointer">
+                            <span id="speed-label" class="text-xs font-mono text-indigo-400 w-12">400ms</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button id="btn-step" onclick="stepAlgorithm()" title="Bước tiếp theo" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-xl text-xs font-medium transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-forward-step"></i> Bước
+                            </button>
+                            <button id="btn-play" onclick="togglePlay()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/30">
+                                <i class="fa-solid fa-play" id="play-icon"></i> <span id="play-text">Bắt đầu</span>
+                            </button>
+                            <button onclick="resetMaze()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 px-3 py-2 rounded-xl text-xs font-medium transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-rotate-right"></i> Đặt lại
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Status Logs & Metrics -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <!-- Status Card -->
+                <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 shadow-xl">
+                    <h3 class="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-indigo-400"></i> Trạng thái thuật toán
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-slate-900/60 border border-slate-700/60 p-3 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block mb-1">Trạng thái tìm kiếm</span>
+                            <span id="status-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                                <span class="w-2 h-2 rounded-full bg-slate-400"></i> Sẵn sàng
+                            </span>
+                        </div>
+                        <div class="bg-slate-900/60 border border-slate-700/60 p-3 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block mb-1">Số bước đã duyệt</span>
+                            <span id="stat-steps" class="text-base font-bold text-indigo-400 font-mono">0</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 text-xs text-slate-300">
+                        <div class="flex justify-between py-1 border-b border-slate-700/50">
+                            <span class="text-slate-400">Vị trí hiện tại (Row, Col):</span>
+                            <span id="stat-pos" class="font-mono text-cyan-400">(0, 0)</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-slate-700/50">
+                            <span class="text-slate-400">Hướng thử nghiệm:</span>
+                            <span id="stat-dir" class="font-mono text-amber-400">Chưa bắt đầu</span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span class="text-slate-400">Số lần quay lui (Backtrack):</span>
+                            <span id="stat-backtracks" class="font-mono text-rose-400">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Log Activity Card -->
+                <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 shadow-xl flex flex-col h-72">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-terminal text-cyan-400"></i> Nhật ký hoạt động
+                        </h3>
+                        <button onclick="clearLogs()" class="text-[11px] text-slate-400 hover:text-slate-200 transition">Xóa nhật ký</button>
+                    </div>
+                    <div id="log-container" class="bg-slate-950/80 border border-slate-700/80 rounded-xl p-3 flex-grow overflow-y-auto font-mono text-xs space-y-2 scrollbar-thin">
+                        <div class="text-slate-500 italic">[Hệ thống] Đã tải ma trận 6x6 ban đầu. Sẵn sàng chạy thuật toán quay lui.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Theory & Code View -->
+        <div id="tab-theory" class="hidden space-y-6">
+            <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-indigo-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb"></i> Thuật toán Quay lui (Backtracking) là gì?
+                    </h2>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        Quay lui là một kỹ thuật thiết kế thuật toán dựa trên đệ quy nhằm tìm kiếm tất cả hoặc một giải pháp cho các bài toán thỏa mãn các ràng buộc cho trước. Bằng cách thử nghiệm từng bước một, khi đi đến một nhánh cụt (gặp tường hoặc đã đi qua mà không tìm được đường tới đích), thuật toán sẽ <strong>quay lui (backtrack)</strong> về bước trước đó để thử con đường hoặc hướng đi khác.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div class="bg-slate-900/60 border border-slate-700/60 p-4 rounded-xl">
+                            <div class="font-semibold text-indigo-300 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-shoe-prints"></i> 1. Tiến (Forward)</div>
+                            <p class="text-slate-400">Thử di chuyển theo các hướng khả dĩ (Xuống, Phải, Lên, Trái) nếu ô đó hợp lệ và chưa đi qua.</p>
+                        </div>
+                        <div class="bg-slate-900/60 border border-slate-700/60 p-4 rounded-xl">
+                            <div class="font-semibold text-amber-300 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-check-to-slot"></i> 2. Kiểm tra (Check)</div>
+                            <p class="text-slate-400">Nếu đạt đến ô đích (5,5), thông báo thành công. Nếu không tìm thấy đường đi tiếp từ ô hiện tại, đánh dấu ô đó là ngõ cụt.</p>
+                        </div>
+                        <div class="bg-slate-900/60 border border-slate-700/60 p-4 rounded-xl">
+                            <div class="font-semibold text-rose-300 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-rotate-left"></i> 3. Quay lui (Backtrack)</div>
+                            <p class="text-slate-400">Rút lui về ô trước đó, gỡ bỏ dấu vết và tiếp tục thử các hướng còn lại chưa xét.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-700 pt-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-semibold text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-code text-cyan-400"></i> Mã nguồn C tham khảo
+                        </h3>
+                        <button onclick="copyCode()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-copy"></i> Sao chép mã nguồn
+                        </button>
+                    </div>
+                    <pre class="bg-slate-950 border border-slate-700/80 rounded-xl p-4 text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed"><code>#include &lt;stdio.h&gt;
+#define N 6
+
+// Hàm in ma trận đường đi
+void printSolution(int sol[N][N]) {
+    for (int i = 0; i &lt; N; i++) {
+        for (int j = 0; j &lt; N; j++)
+            printf("%d ", sol[i][j]);
+        printf("\n");
+    }
+}
+
+// Kiểm tra vị trí (x, y) có hợp lệ trong mê cung hay không
+int isSafe(int maze[N][N], int x, int y) {
+    return (x &gt;= 0 &amp;&amp; x &lt; N &amp;&amp; y &gt;= 0 &amp;&amp; y &lt; N &amp;&amp; maze[x][y] == 0);
+}
+
+// Hàm đệ quy giải mê cung bằng quay lui
+int solveMazeUtil(int maze[N][N], int x, int y, int sol[N][N]) {
+    // Nếu đã đến đích (N-1, N-1), hoàn thành
+    if (x == N - 1 &amp;&amp; y == N - 1 && maze[x][y] == 0) {
+        sol[x][y] = 1;
+        return 1;
+    }
+
+    // Kiểm tra xem maze[x][y] có phải là ô đi được không
+    if (isSafe(maze, x, y) == 1) {
+        // Đã đi qua ô này trong đường đi hiện tại
+        sol[x][y] = 1;
+
+        // 1. Thử di chuyển xuống dưới
+        if (solveMazeUtil(maze, x + 1, y, sol) == 1)
+            return 1;
+
+        // 2. Nếu xuống dưới không được, thử di chuyển sang phải
+        if (solveMazeUtil(maze, x, y + 1, sol) == 1)
+            return 1;
+
+        // 3. Nếu sang phải không được, thử di chuyển lên trên
+        if (solveMazeUtil(maze, x - 1, y, sol) == 1)
+            return 1;
+
+        // 4. Nếu lên trên không được, thử di chuyển sang trái
+        if (solveMazeUtil(maze, x, y - 1, sol) == 1)
+            return 1;
+
+        // Nếu không hướng nào đi được -> Quay lui (Backtrack)
+        sol[x][y] = 0;
+        return 0;
+    }
+
+    return 0;
+}
+
+int main() {
+    int maze[N][N] = {
+        {0, 0, 1, 0, 0, 0},
+        {1, 0, 1, 0, 1, 0},
+        {0, 0, 0, 0, 1, 0},
+        {1, 0, 1, 0, 0, 0},
+        {0, 1, 0, 1, 1, 0},
+        {1, 1, 0, 0, 0, 0}
+    };
+
+    int sol[N][N] = { {0} };
+
+    if (solveMazeUtil(maze, 0, 0, sol) == 0) {
+        printf("Khong tim thay duong đi!\n");
+        return 0;
+    }
+
+    printf("Duong di tim thay:\n");
+    printSolution(sol);
+    return 0;
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-800/60 border-t border-slate-700 py-4 px-6 text-center text-xs text-slate-400">
+        <p>Mô phỏng Thuật toán Quay lui Mê Cung 6x6 &bull; Thiết kế với Tailwind CSS & JavaScript</p>
+    </footer>
+
+    <script>
+        const N = 6;
+        let initialMaze = [
+            [0, 0, 1, 0, 0, 0],
+            [1, 0, 1, 0, 1, 0],
+            [0, 0, 0, 0, 1, 0],
+            [1, 0, 1, 0, 0, 0],
+            [0, 1, 0, 1, 1, 0],
+            [1, 1, 0, 0, 0, 0]
+        ];
+
+        let maze = JSON.parse(JSON.stringify(initialMaze));
+        let stateGrid = Array(N).fill(0).map(() => Array(N).fill(0)); // 0: unvisited, 1: path, 2: visiting, 3: deadend
+        let currentPos = { x: 0, y: 0 };
+        let stepCount = 0;
+        let backtrackCount = 0;
+        let isRunning = false;
+        let timer = null;
+
+        // Generator states for iterative backtracking simulation
+        let generator = null;
+
+        // DOM elements
+        const gridEl = document.getElementById('maze-grid');
+        const speedSlider = document.getElementById('speed-slider');
+        const speedLabel = document.getElementById('speed-label');
+        const statusBadge = document.getElementById('status-badge');
+        const statSteps = document.getElementById('stat-steps');
+        const statPos = document.getElementById('stat-pos');
+        const statDir = document.getElementById('stat-dir');
+        const statBacktracks = document.getElementById('stat-backtracks');
+        const logContainer = document.getElementById('log-container');
+        const playIcon = document.getElementById('play-icon');
+        const playText = document.getElementById('play-text');
+
+        speedSlider.addEventListener('input', (e) => {
+            speedLabel.innerText = e.target.value + 'ms';
+        });
+
+        function switchTab(tab) {
+            const simTab = document.getElementById('tab-simulator');
+            const theoryTab = document.getElementById('tab-theory');
+            const btnSim = document.getElementById('btn-tab-simulator');
+            const btnTheory = document.getElementById('btn-tab-theory');
+
+            if (tab === 'simulator') {
+                simTab.classList.remove('hidden');
+                theoryTab.classList.add('hidden');
+                btnSim.className = "px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow-sm";
+                btnTheory.className = "px-4 py-2 text-sm font-medium rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition";
+            } else {
+                simTab.classList.add('hidden');
+                theoryTab.classList.remove('hidden');
+                btnTheory.className = "px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow-sm";
+                btnSim.className = "px-4 py-2 text-sm font-medium rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition";
+                pauseAlgorithm();
+            }
+        }
+
+        function renderGrid() {
+            gridEl.innerHTML = '';
+            for (let r = 0; r < N; r++) {
+                for (let c = 0; c < N; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = "rounded-lg flex flex-col items-center justify-center font-bold text-xs cursor-pointer cell-transition relative select-none border";
+                    
+                    let bgClass = "";
+                    let textContent = "";
+                    let iconHtml = "";
+
+                    // Check special positions
+                    const isStart = (r === 0 && c === 0);
+                    const isEnd = (r === N - 1 && c === N - 1);
+                    const isCurrent = (currentPos.x === r && currentPos.y === c && isRunning);
+
+                    if (maze[r][c] === 1) {
+                        bgClass = "bg-slate-900 border-slate-700 text-slate-600";
+                        textContent = "1";
+                    } else {
+                        // Cell is open path (0)
+                        if (stateGrid[r][c] === 2) {
+                            bgClass = "bg-blue-500 border-blue-400 text-white shadow-lg shadow-blue-500/30 scale-105 z-10";
+                            iconHtml = '<i class="fa-solid fa-check text-xs"></i>';
+                        } else if (stateGrid[r][c] === 3) {
+                            bgClass = "bg-orange-600/90 border-orange-500 text-white";
+                            iconHtml = '<i class="fa-solid fa-rotate-left text-[10px]"></i>';
+                        } else if (stateGrid[r][c] === 1) {
+                            bgClass = "bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-600/30";
+                            iconHtml = '<i class="fa-solid fa-arrow-up text-[10px] opacity-60"></i>';
+                        } else {
+                            bgClass = "bg-slate-800/80 border-slate-700/80 text-slate-500 hover:bg-slate-700";
+                            textContent = "0";
+                        }
+                    }
+
+                    if (isStart) {
+                        bgClass = "bg-emerald-600 border-emerald-500 text-white shadow-md shadow-emerald-600/40";
+                        iconHtml = '<i class="fa-solid fa-flag text-xs"></i>';
+                        textContent = "";
+                    }
+                    if (isEnd) {
+                        bgClass = "bg-rose-600 border-rose-500 text-white shadow-md shadow-rose-600/40";
+                        iconHtml = '<i class="fa-solid fa-bullseye text-xs"></i>';
+                        textContent = "";
+                    }
+
+                    if (isCurrent && !isStart && !isEnd) {
+                        bgClass = "bg-amber-500 border-amber-400 text-white animate-pulse shadow-lg shadow-amber-500/50 scale-110 z-20";
+                        iconHtml = '<i class="fa-solid fa-person-walking text-xs"></i>';
+                        textContent = "";
+                    }
+
+                    cell.className += ` ${bgClass}`;
+                    cell.innerHTML = iconHtml || textContent;
+
+                    // Allow toggling walls if not running
+                    cell.onclick = () => {
+                        if (isRunning) return;
+                        if (isStart || isEnd) return;
+                        maze[r][c] = maze[r][c] === 1 ? 0 : 1;
+                        addLog(`Người dùng thay đổi ô (${r}, ${c}) thành ${maze[r][c] === 1 ? 'Tường (1)' : 'Đường (0)'}`);
+                        renderGrid();
+                    };
+
+                    gridEl.appendChild(cell);
+                }
+            }
+        }
+
+        function addLog(msg) {
+            const timeStr = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.innerHTML = `<span class="text-slate-500">[${timeStr}]</span> ${msg}`;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLogs() {
+            logContainer.innerHTML = '<div class="text-slate-500 italic">[Hệ thống] Đã xóa nhật ký.</div>';
+        }
+
+        function updateStats(pos, dirText, statusText, statusType) {
+            currentPos = pos;
+            statSteps.innerText = stepCount;
+            statPos.innerText = `(${pos.x}, ${pos.y})`;
+            statDir.innerText = dirText;
+            statBacktracks.innerText = backtrackCount;
+
+            let badgeHtml = '';
+            if (statusType === 'ready') {
+                badgeHtml = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> Sẵn sàng`;
+                statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700";
+            } else if (statusType === 'running') {
+                badgeHtml = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> Đang tìm kiếm...`;
+                statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30";
+            } else if (statusType === 'success') {
+                badgeHtml = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Đã tìm thấy đường đi!`;
+                statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+            } else if (statusType === 'failed') {
+                badgeHtml = `<span class="w-2 h-2 rounded-full bg-rose-400"></span> Không có đường đi!`;
+                statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30";
+            }
+            statusBadge.innerHTML = badgeHtml;
+        }
+
+        // Generator function that yields state changes for backtracking
+        function* solveMazeGenerator() {
+            let sol = Array(N).fill(0).map(() => Array(N).fill(0));
+
+            function* util(x, y) {
+                if (x === N - 1 && y === N - 1 && maze[x][y] === 0) {
+                    sol[x][y] = 1;
+                    stateGrid[x][y] = 2; // Success path
+                    yield { x, y, dir: "Đã đến đích (5,5)", status: "success" };
+                    return true;
+                }
+
+                if (x >= 0 && x < N && y >= 0 && y < N && maze[x][y] === 0 && sol[x][y] === 0) {
+                    sol[x][y] = 1;
+                    stateGrid[x][y] = 2; // Visiting / Path part
+                    stepCount++;
+                    yield { x, y, dir: "Đang xét ô hiện tại", status: "running" };
+
+                    // 1. Xuống dưới (Down)
+                    yield { x, y, dir: "Thử đi Xuống (x+1, y)" };
+                    if (yield* util(x + 1, y)) return true;
+
+                    // 2. Sang phải (Right)
+                    yield { x, y, dir: "Thử đi Phải (x, y+1)" };
+                    if (yield* util(x, y + 1)) return true;
+
+                    // 3. Lên trên (Up)
+                    yield { x, y, dir: "Thử đi Lên (x-1, y)" };
+                    if (yield* util(x - 1, y)) return true;
+
+                    // 4. Sang trái (Left)
+                    yield { x, y, dir: "Thử đi Trái (x, y-1)" };
+                    if (yield* util(x, y - 1)) return true;
+
+                    // BACKTRACK
+                    sol[x][y] = 0;
+                    stateGrid[x][y] = 3; // Deadend / Backtracked
+                    backtrackCount++;
+                    yield { x, y, dir: "Ngõ cụt! Quay lui (Backtrack)", status: "backtrack" };
+                    return false;
+                }
+                return false;
+            }
+
+            let found = yield* util(0, 0);
+            return found;
+        }
+
+        function initGenerator() {
+            generator = solveMazeGenerator();
+        }
+
+        function stepAlgorithm() {
+            if (!generator) {
+                initGenerator();
+            }
+
+            let result = generator.next();
+            if (!result.done) {
+                let val = result.value;
+                renderGrid();
+                if (val.status === 'success') {
+                    updateStats({ x: val.x, y: val.y }, val.dir, "Đã tìm thấy đường đi!", "success");
+                    addLog(`🎉 Đã tìm thấy đường đi thành công đến (5, 5)! Tổng số bước duyệt: ${stepCount}, Quay lui: ${backtrackCount}`);
+                    pauseAlgorithm();
+                } else if (val.status === 'backtrack') {
+                    updateStats({ x: val.x, y: val.y }, val.dir, "Đang tìm kiếm...", "running");
+                    addLog(`🔄 Quay lui tại ô (${val.x}, ${val.y}) do gặp ngõ cụt.`);
+                } else {
+                    updateStats({ x: val.x, y: val.y }, val.dir, "Đang tìm kiếm...", "running");
+                    addLog(`➡️ Đang thử nghiệm tại vị trí (${val.x}, ${val.y}) - ${val.dir}`);
+                }
+            } else {
+                // Done generator without finding path
+                if (result.value === false) {
+                    updateStats(currentPos, "Kết thúc tìm kiếm", "Không có đường đi!", "failed");
+                    addLog(`❌ Mê cung này không có đường đi hợp lệ từ (0,0) đến (5,5).`);
+                }
+                pauseAlgorithm();
+            }
+        }
+
+        function togglePlay() {
+            if (isRunning) {
+                pauseAlgorithm();
+            } else {
+                startAlgorithm();
+            }
+        }
+
+        function startAlgorithm() {
+            if (!generator) {
+                initGenerator();
+            }
+            isRunning = true;
+            playIcon.className = "fa-solid fa-pause";
+            playText.innerText = "Tạm dừng";
+            
+            let interval = parseInt(speedSlider.value);
+            timer = setInterval(() => {
+                let result = generator.next();
+                if (!result.done) {
+                    let val = result.value;
+                    renderGrid();
+                    if (val.status === 'success') {
+                        updateStats({ x: val.x, y: val.y }, val.dir, "Đã tìm thấy đường đi!", "success");
+                        addLog(`🎉 Đã tìm thấy đường đi thành công đến (5, 5)! Tổng số bước: ${stepCount}, Quay lui: ${backtrackCount}`);
+                        pauseAlgorithm();
+                    } else if (val.status === 'backtrack') {
+                        updateStats({ x: val.x, y: val.y }, val.dir, "Đang tìm kiếm...", "running");
+                        addLog(`🔄 Quay lui tại ô (${val.x}, ${val.y}).`);
+                    } else {
+                        updateStats({ x: val.x, y: val.y }, val.dir, "Đang tìm kiếm...", "running");
+                    }
+                } else {
+                    if (result.value === false || statBadgeIsFailed()) {
+                        updateStats(currentPos, "Kết thúc tìm kiếm", "Không có đường đi!", "failed");
+                        addLog(`❌ Không tìm thấy đường đi hợp lệ trong mê cung này.`);
+                    }
+                    pauseAlgorithm();
+                }
+            }, interval);
+        }
+
+        function statBadgeIsFailed() {
+            return statusBadge.innerText.includes("Không có");
+        }
+
+        function pauseAlgorithm() {
+            isRunning = false;
+            clearInterval(timer);
+            playIcon.className = "fa-solid fa-play";
+            playText.innerText = "Bắt đầu";
+        }
+
+        function resetMaze() {
+            pauseAlgorithm();
+            maze = JSON.parse(JSON.stringify(initialMaze));
+            stateGrid = Array(N).fill(0).map(() => Array(N).fill(0));
+            currentPos = { x: 0, y: 0 };
+            stepCount = 0;
+            backtrackCount = 0;
+            generator = null;
+            renderGrid();
+            updateStats({ x: 0, y: 0 }, "Chưa bắt đầu", "Sẵn sàng", "ready");
+            addLog(`[Hệ thống] Đã đặt lại mê cung và trạng thái thuật toán.`);
+        }
+
+        function copyCode() {
+            const codeText = document.querySelector('pre code').innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = codeText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alertBox("Đã sao chép mã nguồn C vào bộ nhớ tạm thành công!");
+            } catch (err) {
+                console.error('Không thể sao chép', err);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function alertBox(msg) {
+            // Friendly custom modal message or log instead of alert()
+            addLog(`[Thông báo] ${msg}`);
+        }
+
+        // Initial render on load
+        window.onload = function() {
+            renderGrid();
+        };
+    </script>
+</body>
+</html>
